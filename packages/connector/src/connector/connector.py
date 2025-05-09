@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from scraper import scrape
 
+
 @dataclass
 class Connection:
     name: str
