@@ -5,15 +5,19 @@ import json
 
 from prefect.cache_policies import TASK_SOURCE, INPUTS
 
-from connector.setup_prefect import s3_buck_block_name
+from connector.setup_prefect import get_aws_bucket_block
 
-cache_policy = (TASK_SOURCE + INPUTS).configure(
-    key_storage=S3Bucket.load(s3_buck_block_name)
+cache_policy = TASK_SOURCE + INPUTS
+
+
+@task(
+    persist_result=True,  # optional to set this when other info is given as below
+    result_storage_key="team-names-filter-{parameters[filter]}.json",
+    result_serializer="json",
+    cache_policy=cache_policy,
+    result_storage=get_aws_bucket_block(),
 )
-
-
-@task(cache_policy=cache_policy)
-def get_team_names():
+def get_team_names(filter="No"):
     print("Getting data from the statsapi...")
     teams_names = [
         x["name"]
@@ -21,6 +25,11 @@ def get_team_names():
             "teams", {"sportIds": 1, "activeStatus": "Yes", "fields": "teams,name"}
         )["teams"]
     ]
+
+    if filter != "No":
+        teams_names = [
+            team_name for team_name in teams_names if filter not in team_name
+        ]
 
     json_team_names = json.dumps({"names": teams_names})
 
