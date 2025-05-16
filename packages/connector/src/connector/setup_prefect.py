@@ -1,9 +1,9 @@
-import os
 from dotenv import load_dotenv
 
 from prefect_aws import AwsCredentials, S3Bucket
 from prefect.blocks.system import Secret
 
+from connector.env import connector_env
 
 load_dotenv()
 
@@ -28,9 +28,9 @@ def get_motherduck_block():
 def main():
     try:
         AwsCredentials(
-            aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
-            aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
-            region_name=os.environ["AWS_DEFAULT_REGION"],
+            aws_access_key_id=connector_env.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=connector_env.AWS_SECRET_ACCESS_KEY,
+            region_name=connector_env.AWS_REGION_NAME,
         ).save(s3_cred_block_name)
     except ValueError:
         print("Saving AWS credentials block failed (it might exist already).")
@@ -46,7 +46,7 @@ def main():
 
     try:
         Secret(
-            value=os.environ["MOTHERDUCK_TOKEN"],
+            value=connector_env.MOTHERDUCK_TOKEN,
             name=motherduck_token_name,  # Replace this with a name that will help you identify the secret.
         ).save(motherduck_token_name)  # Replace this with a descriptive block name.
     except ValueError:
