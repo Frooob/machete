@@ -1,5 +1,5 @@
 import pandas as pd
-from connector.connector import Connection
+from scraper.scrape import scrape
 
 
 def main():
@@ -9,5 +9,4 @@ def main():
 if __name__ == "__main__":
     main()
     df = pd.DataFrame({1: [2]})
-    c = Connection("Speedo", 2)
-    c.get_connection()
+    scrape()
