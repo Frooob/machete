@@ -10,6 +10,8 @@ import duckdb
 from datetime import timedelta
 import requests
 
+import country_converter as coco
+
 from prefect.cache_policies import TASK_SOURCE, INPUTS
 from prefect_aws import S3Bucket
 
@@ -27,7 +29,6 @@ cache_policy_s3_no_delete = TASK_SOURCE + INPUTS
     result_storage=get_aws_bucket_block(),
 )
 def get_all_exchanges_json():
-    # https://eodhd.com/api/exchanges-list/?api_token=YOUR_API_KEY&fmt=json
     print("Fetching list of all exchanges")
     url = f"https://eodhd.com/api/exchanges-list/?api_token={scraper_env.EODHD_API_KEY}&fmt=json"
     response = requests.get(url)
@@ -35,10 +36,33 @@ def get_all_exchanges_json():
     return response.text
 
 
+@task(
+    result_storage_key="exchange-{parameters[code]}-symbol-list.json",
+    result_serializer="json",
+    cache_policy=cache_policy_s3_no_delete,
+    result_storage=get_aws_bucket_block(),
+)
+def get_common_stocks_from_exchange(code: str):
+    print(f"Fetching list of common stocks of exchange {code}.")
+    url = f"https://eodhd.com/api/exchange-symbol-list/{code}?api_token={scraper_env.EODHD_API_KEY}&type=common_stock&fmt=json"
+    response = requests.get(url)
+    response.raise_for_status()
+    return response.text
+
+
+@task
+def filter_relevant_exchange_codes(exchanges: list[dict]):
+    relevant_codes = [
+        exchange["Code"] for exchange in exchanges if exchange["CountryISO3"]
+    ]
+    return relevant_codes
+
+
 @flow(log_prints=True)
 def get_all_exchanges():
     exchanges_json = get_all_exchanges_json()
     exchanges = json.loads(exchanges_json)
+    exchange_codes = filter_relevant_exchange_codes(exchanges)
 
     return exchanges
 
