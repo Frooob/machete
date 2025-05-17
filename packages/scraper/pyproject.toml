@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "awswrangler>=3.11.0",
     "country-converter>=1.3",
     "duckdb>=1.2.2",
     "mlb-statsapi>=1.9.0",

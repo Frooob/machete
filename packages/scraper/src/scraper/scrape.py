@@ -1,8 +1,15 @@
+import os
+from scraper.metadata import data_root
+
 from connector.setup_prefect import (
     get_motherduck_block,
     get_aws_bucket_block,
     get_aws_credentials_block,
 )
+
+
+def initialize():
+    os.makedirs(data_root, exist_ok=True)
 
 
 def scrape():
@@ -15,4 +22,5 @@ def scrape():
 
 
 if __name__ == "__main__":
-    scrape()
+    initialize()
+    # scrape()
